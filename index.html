@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live Tài Xỉu MD5</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:radial-gradient(circle at 30% 10%,#1a1a2e,#0f0c29 55%,#000);color:#fff;overflow-x:hidden}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(0,0,0,.55);border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:10px;backdrop-filter:blur(10px)}
+h1{font-size:1.1rem;background:linear-gradient(90deg,#ff6b6b,#feca57,#48dbfb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.78rem}
+.tools input{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);color:#fff;padding:5px 10px;border-radius:6px;font-size:.78rem;outline:none;width:240px}
+.tools input:focus{border-color:#667eea}
+.tools button{padding:5px 12px;border-radius:6px;background:rgba(102,126,234,.35);border:1px solid rgba(102,126,234,.6);color:#fff;cursor:pointer;font-size:.78rem;font-weight:600}
+.api-status{display:flex;align-items:center;gap:7px;font-size:.78rem;padding:5px 12px;border-radius:30px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+.dot{width:9px;height:9px;border-radius:50%;background:#666}
+.dot.online{background:#2ecc71;box-shadow:0 0 10px #2ecc71;animation:pulse 1.4s infinite}
+.dot.offline{background:#e74c3c;box-shadow:0 0 10px #e74c3c}
+.dot.loading{background:#feca57;box-shadow:0 0 10px #feca57;animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.layout{display:grid;grid-template-columns:1fr 400px;gap:12px;padding:12px;height:calc(100vh - 56px)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;height:auto}}
+.game-frame{background:#000;border:2px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;min-height:500px}
+.frame-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(0,0,0,.6);border-bottom:1px solid rgba(255,255,255,.08);font-size:.8rem}
+.frame-header .title{color:#feca57;font-weight:700}
+.frame-header a,.frame-header button{font-size:.72rem;padding:4px 10px;border-radius:6px;background:rgba(102,126,234,.3);border:1px solid rgba(102,126,234,.5);color:#fff;text-decoration:none;cursor:pointer;margin-left:5px}
+.game-frame iframe{flex:1;width:100%;border:none;background:#000;min-height:480px}
+.side{display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-right:4px}
+.side::-webkit-scrollbar{width:6px}
+.side::-webkit-scrollbar-thumb{background:#667eea;border-radius:3px}
+.board{background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.cell{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;text-align:center}
+.cell .label{font-size:.65rem;color:#888;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px}
+.cell .value{font-size:1.4rem;font-weight:800;font-family:'Courier New',monospace;color:#feca57;word-break:break-all}
+.result{background:rgba(0,0,0,.5);border:2px solid rgba(255,255,255,.1);border-radius:14px;padding:18px 12px;text-align:center;transition:.4s}
+.result.tai{border-color:#ff6b6b;box-shadow:0 0 40px rgba(255,107,107,.35) inset}
+.result.xiu{border-color:#48dbfb;box-shadow:0 0 40px rgba(72,219,251,.35) inset}
+.result-label{font-size:.68rem;color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.result-main{font-size:3rem;font-weight:900;letter-spacing:6px;line-height:1;transition:.4s}
+.result-main.tai{color:#ff6b6b;text-shadow:0 0 30px rgba(255,107,107,.8)}
+.result-main.xiu{color:#48dbfb;text-shadow:0 0 30px rgba(72,219,251,.8)}
+.result-main.idle{color:#555;font-size:1.15rem;letter-spacing:2px}
+.dice-row{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.die{width:46px;height:46px;background:linear-gradient(145deg,#fff,#d5d5d5);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.45rem;font-weight:900;color:#111;box-shadow:0 4px 10px rgba(0,0,0,.5),inset 0 -3px 6px rgba(0,0,0,.15)}
+.die.spin{animation:spinDie .5s ease}
+@keyframes spinDie{0%{transform:rotateY(0) scale(1)}50%{transform:rotateY(180deg) scale(1.15)}100%{transform:rotateY(360deg) scale(1)}}
+.panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px}
+.panel h2{font-size:.85rem;color:#feca57;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.badge{font-size:.62rem;padding:2px 8px;background:rgba(102,126,234,.3);border-radius:20px;color:#a8b3ff;font-weight:500}
+.history-wrap{max-height:340px;overflow-y:auto}
+.history-wrap::-webkit-scrollbar{width:5px}
+.history-wrap::-webkit-scrollbar-thumb{background:#667eea;border-radius:3px}
+.h-row{display:grid;grid-template-columns:75px 1fr 55px 55px;gap:8px;align-items:center;padding:7px 10px;border-radius:8px;background:rgba(0,0,0,.35);margin-bottom:5px;font-size:.78rem;animation:slideIn .35s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+.h-row .sess{color:#888;font-family:monospace;font-size:.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-row .dices{display:flex;gap:4px}
+.h-row .dices .d{width:22px;height:22px;background:#fff;color:#000;border-radius:5px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem}
+.h-row .sum{text-align:center;color:#ccc;font-family:monospace;font-size:.75rem}
+.h-row .tag{text-align:center;padding:3px 5px;border-radius:20px;font-weight:800;font-size:.65rem}
+.tag.tai{background:rgba(255,107,107,.22);color:#ff6b6b}
+.tag.xiu{background:rgba(72,219,251,.22);color:#48dbfb}
+.empty{text-align:center;padding:18px;color:#555;font-style:italic;font-size:.82rem}
+.btn-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.btn-row button{flex:1;min-width:90px;padding:7px;border-radius:6px;font-size:.75rem;font-weight:600;border:1px solid rgba(255,255,255,.15);background:rgba(102,126,234,.3);color:#fff;cursor:pointer}
+.btn-row button.success{background:rgba(46,204,113,.35);border-color:rgba(46,204,113,.5)}
+.btn-row button.warn{background:rgba(254,202,87,.3);border-color:rgba(254,202,87,.5);color:#feca57}
+.debug-body{max-height:150px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.7rem;line-height:1.5;background:rgba(0,0,0,.5);padding:8px;border-radius:8px;color:#a8ffab;white-space:pre-wrap;word-break:break-all;margin-top:8px}
+.debug-body.hidden{display:none}
+.toast{position:fixed;top:70px;right:20px;padding:11px 18px;border-radius:10px;color:#fff;font-size:.85rem;font-weight:700;background:#2ecc71;opacity:0;transform:translateX(120%);transition:.35s;z-index:999;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateX(0)}
+.toast.tai{background:#e74c3c}
+.toast.xiu{background:#0984e3}
+.toast.error{background:#e74c3c}
+.toast.info{background:#0984e3}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<header>
+  <h1>🎲 Live Tài Xỉu MD5</h1>
+  <div class="tools">
+    <input id="apiUrl" placeholder="http://localhost:3000">
+    <button onclick="saveApiUrl()">💾 Lưu</button>
+    <div class="api-status">
+      <span class="dot loading" id="statusDot"></span>
+      <span id="statusText">Kết nối...</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="game-frame">
+    <div class="frame-header">
+      <span class="title">🎮 Game</span>
+      <div>
+        <button onclick="reloadGame()">🔄 Reload</button>
+        <a id="extLink" href="https://lc79b.bet" target="_blank">↗ Tab mới</a>
+      </div>
+    </div>
+    <iframe id="gameFrame" src="https://lc79b.bet" allowfullscreen referrerpolicy="no-referrer"></iframe>
+  </div>
+
+  <div class="side">
+    <div class="board">
+      <div class="row">
+        <div class="cell"><div class="label">Phiên game</div><div class="value" id="liveSession">--</div></div>
+        <div class="cell"><div class="label">Tổng điểm</div><div class="value" id="liveSum">--</div></div>
+      </div>
+      <div class="row">
+        <div class="cell"><div class="label">Dự đoán</div><div class="value" id="livePredict" style="font-size:1.1rem;color:#48dbfb">--</div></div>
+        <div class="cell"><div class="label">Độ tin cậy</div><div class="value" id="liveConf" style="font-size:1.1rem;color:#48dbfb">--</div></div>
+      </div>
+      <div class="result" id="resultBox">
+        <div class="result-label">Kết quả phiên</div>
+        <div class="result-main idle" id="resultMain">CHỜ DỮ LIỆU</div>
+        <div class="dice-row" id="diceRow">
+          <div class="die">?</div><div class="die">?</div><div class="die">?</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>📜 Lịch Sử <span class="badge" id="historyCount">0</span></h2>
+      <div class="history-wrap" id="historyWrap">
+        <div class="empty">Đang chờ phiên đầu tiên...</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>
+        🐛 Debug
+        <button class="badge" onclick="toggleDebug()" style="cursor:pointer;border:none;color:#a8b3ff">Ẩn/Hiện</button>
+      </h2>
+      <div class="btn-row">
+        <button class="success" onclick="testAPI()">🧪 Test API</button>
+        <button class="warn" onclick="forceGenerate()">⚡ Sinh phiên mới</button>
+      </div>
+      <div class="debug-body" id="debugBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let API = localStorage.getItem('md5ApiUrl') || 'http://localhost:3000';
+const POLL_MS = 3000;
+let lastSession = null;
+let pollTimer = null;
+
+document.getElementById('extLink').href = 'https://lc79b.bet';
+document.getElementById('apiUrl').value = API;
+
+function toast(msg, cls = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (cls ? ' ' + cls : '');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.className = 'toast', 3200);
+}
+
+function log(msg, color = '#a8ffab') {
+  const el = document.getElementById('debugBody');
+  const time = new Date().toLocaleTimeString('vi-VN');
+  const line = document.createElement('div');
+  line.innerHTML = `<span style="color:#666">[${time}]</span> <span style="color:${color}">${escapeHtml(msg)}</span>`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+  if (el.children.length > 60) el.removeChild(el.firstChild);
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function toggleDebug() { document.getElementById('debugBody').classList.toggle('hidden'); }
+
+function beep(f = 880) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = f; o.type = 'sine';
+    g.gain.setValueAtTime(.12, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .25);
+    o.start(); o.stop(ctx.currentTime + .25);
+  } catch (e) {}
+}
+
+async function api(path, options = {}) {
+  if (!API) return { ok: false, error: 'Chưa cấu hình API URL' };
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal, ...options });
+    clearTimeout(to);
+    const ct = res.headers.get('content-type') || '';
+    const body = ct.includes('json') ? await res.json() : await res.text();
+    return { ok: res.ok, status: res.status, body };
+  } catch (e) {
+    clearTimeout(to);
+    return { ok: false, error: e.message };
+  }
+}
+
+function setStatus(cls, txt) {
+  document.getElementById('statusDot').className = 'dot ' + cls;
+  document.getElementById('statusText').textContent = txt;
+}
+
+function saveApiUrl() {
+  API = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+  localStorage.setItem('md5ApiUrl', API);
+  toast('Đã lưu API', 'info');
+  lastSession = null;
+  log('🔗 API URL = ' + API, '#feca57');
+  poll();
+}
+
+function parseRec(rec) {
+  if (!rec || typeof rec !== 'object') return null;
+  let dice = rec.dice || [];
+  dice = (Array.isArray(dice) ? dice : []).map(Number).filter(n => n >= 1 && n <= 6);
+  const sum = rec.sum ?? dice.reduce((a, b) => a + b, 0);
+  const result = rec.result ?? (sum >= 11 ? 'tài' : 'xỉu');
+  const type = rec.type ?? (sum >= 11 ? 'tai' : 'xiu');
+  return { session: String(rec.session ?? '--'), dice, sum, result, type };
+}
+
+function renderLive(rec) {
+  document.getElementById('liveSession').textContent = rec.session;
+  document.getElementById('liveSum').textContent = rec.dice.length ? rec.sum : '--';
+  const box = document.getElementById('resultBox');
+  const main = document.getElementById('resultMain');
+  const row = document.getElementById('diceRow');
+  box.className = 'result ' + rec.type;
+  main.className = 'result-main ' + rec.type;
+  main.textContent = rec.type === 'tai' ? 'TÀI' : 'XỈU';
+  row.innerHTML = rec.dice.map(d => `<div class="die spin">${d}</div>`).join('');
+  if (lastSession !== null && rec.session !== lastSession) {
+    beep(rec.type === 'tai' ? 1000 : 700);
+    toast(`Phiên #${rec.session} → ${rec.result.toUpperCase()} (${rec.sum})`, rec.type);
+  }
+  lastSession = rec.session;
+}
+
+function renderHistory(list) {
+  const wrap = document.getElementById('historyWrap');
+  document.getElementById('historyCount').textContent = list.length;
+  if (!list.length) { wrap.innerHTML = '<div class="empty">Chưa có phiên nào</div>'; return; }
+  wrap.innerHTML = list.map(r => `
+    <div class="h-row">
+      <span class="sess">#${r.session}</span>
+      <div class="dices">${r.dice.map(d => `<div class="d">${d}</div>`).join('')}</div>
+      <span class="sum">Σ ${r.sum}</span>
+      <span class="tag ${r.type}">${r.result.toUpperCase()}</span>
+    </div>
+  `).join('');
+}
+
+function renderPredict(pred) {
+  const el = document.getElementById('livePredict');
+  if (!pred) { el.textContent = '--'; return; }
+  const s = String(pred).toUpperCase();
+  if (s.includes('TÀI') || s.includes('TAI')) { el.textContent = 'TÀI'; el.style.color = '#ff6b6b'; }
+  else if (s.includes('XỈU') || s.includes('XIU')) { el.textContent = 'XỈU'; el.style.color = '#48dbfb'; }
+  else el.textContent = s;
+}
+
+async function poll() {
+  if (!API) { setStatus('offline', 'Chưa cấu hình API URL'); return; }
+  setStatus('loading', 'Đang tải...');
+  const h = await api('/api/history?limit=50');
+  if (!h.ok) { setStatus('offline', 'Mất kết nối: ' + (h.error || h.status)); return; }
+  let list = Array.isArray(h.body?.history) ? h.body.history : (Array.isArray(h.body) ? h.body : []);
+  if (list.length) {
+    const recs = list.map(parseRec).filter(Boolean);
+    renderLive(recs[0]);
+    renderHistory(recs);
+    log(`✔ ${recs.length} phiên — mới nhất #${recs[0].session}`, '#48dbfb');
+  } else { renderHistory([]); }
+
+  const p = await api('/api/predict');
+  if (p.ok) {
+    renderPredict(p.body?.prediction);
+    const conf = p.body?.confidence;
+    document.getElementById('liveConf').textContent = conf != null ? Math.round(Number(conf) * 100) + '%' : '--';
+  }
+  setStatus('online', 'Online — auto cập nhật');
+}
+
+async function testAPI() {
+  if (!API) { toast('Chưa nhập API URL', 'error'); return; }
+  log('════ TEST API ════', '#feca57');
+  for (const ep of ['/', '/api/health', '/api/current', '/api/history?limit=5', '/api/predict']) {
+    const r = await api(ep);
+    if (r.error) log(`❌ GET ${ep} → ${r.error}`, '#ff6b6b');
+    else log(`✅ GET ${ep} → ${JSON.stringify(r.body).slice(0, 200)}`, '#a8ffab');
+  }
+  toast('Đã test xong', 'info');
+}
+
+async function forceGenerate() {
+  if (!API) { toast('Chưa nhập API URL', 'error'); return; }
+  const r = await api('/api/generate', { method: 'POST' });
+  if (r.ok) { log('⚡ Sinh phiên mới: ' + JSON.stringify(r.body.record), '#feca57'); toast('Đã sinh phiên mới', 'info'); setTimeout(poll, 300); }
+  else toast('Lỗi: ' + (r.error || r.status), 'error');
+}
+
+function reloadGame() {
+  const f = document.getElementById('gameFrame');
+  f.src = f.src;
+  toast('Đang tải lại game...', 'info');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (API) { log('════ KHỞI ĐỘNG — API: ' + API + ' ════', '#feca57'); poll(); pollTimer = setInterval(poll, POLL_MS); }
+  else { setStatus('offline', 'Nhập URL API ở trên rồi bấm Lưu'); log('⚠ Chưa cấu hình API URL.', '#feca57'); }
+});
+</script>
+</body>
+</html>
