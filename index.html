@@ -10,10 +10,6 @@ html,body{height:100%}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:radial-gradient(circle at 30% 10%,#1a1a2e,#0f0c29 55%,#000);color:#fff;overflow-x:hidden}
 header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(0,0,0,.55);border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:10px;backdrop-filter:blur(10px)}
 h1{font-size:1.1rem;background:linear-gradient(90deg,#ff6b6b,#feca57,#48dbfb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.78rem}
-.tools input{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);color:#fff;padding:5px 10px;border-radius:6px;font-size:.78rem;outline:none;width:240px}
-.tools input:focus{border-color:#667eea}
-.tools button{padding:5px 12px;border-radius:6px;background:rgba(102,126,234,.35);border:1px solid rgba(102,126,234,.6);color:#fff;cursor:pointer;font-size:.78rem;font-weight:600}
 .api-status{display:flex;align-items:center;gap:7px;font-size:.78rem;padding:5px 12px;border-radius:30px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
 .dot{width:9px;height:9px;border-radius:50%;background:#666}
 .dot.online{background:#2ecc71;box-shadow:0 0 10px #2ecc71;animation:pulse 1.4s infinite}
@@ -82,13 +78,9 @@ h1{font-size:1.1rem;background:linear-gradient(90deg,#ff6b6b,#feca57,#48dbfb);-w
 
 <header>
   <h1>🎲 Live Tài Xỉu MD5</h1>
-  <div class="tools">
-    <input id="apiUrl" placeholder="http://localhost:3000">
-    <button onclick="saveApiUrl()">💾 Lưu</button>
-    <div class="api-status">
-      <span class="dot loading" id="statusDot"></span>
-      <span id="statusText">Kết nối...</span>
-    </div>
+  <div class="api-status">
+    <span class="dot loading" id="statusDot"></span>
+    <span id="statusText">Kết nối...</span>
   </div>
 </header>
 
@@ -145,13 +137,15 @@ h1{font-size:1.1rem;background:linear-gradient(90deg,#ff6b6b,#feca57,#48dbfb);-w
 </div>
 
 <script>
-let API = localStorage.getItem('md5ApiUrl') || 'http://localhost:3000';
+/* ===== API = đường dẫn tương đối (cùng domain) ===== */
+const API = '';  // '' → gọi cùng origin (Render)
+localStorage.removeItem('md5ApiUrl'); // Xoá giá trị cũ nếu có
+
 const POLL_MS = 3000;
 let lastSession = null;
 let pollTimer = null;
 
 document.getElementById('extLink').href = 'https://lc79b.bet';
-document.getElementById('apiUrl').value = API;
 
 function toast(msg, cls = '') {
   const t = document.getElementById('toast');
@@ -188,11 +182,13 @@ function beep(f = 880) {
 }
 
 async function api(path, options = {}) {
-  if (!API) return { ok: false, error: 'Chưa cấu hình API URL' };
   const ctrl = new AbortController();
-  const to = setTimeout(() => ctrl.abort(), 12000);
+  const to = setTimeout(() => ctrl.abort(), 15000);
   try {
-    const res = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal, ...options });
+    const res = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json' },
+      signal: ctrl.signal, ...options
+    });
     clearTimeout(to);
     const ct = res.headers.get('content-type') || '';
     const body = ct.includes('json') ? await res.json() : await res.text();
@@ -206,15 +202,6 @@ async function api(path, options = {}) {
 function setStatus(cls, txt) {
   document.getElementById('statusDot').className = 'dot ' + cls;
   document.getElementById('statusText').textContent = txt;
-}
-
-function saveApiUrl() {
-  API = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
-  localStorage.setItem('md5ApiUrl', API);
-  toast('Đã lưu API', 'info');
-  lastSession = null;
-  log('🔗 API URL = ' + API, '#feca57');
-  poll();
 }
 
 function parseRec(rec) {
@@ -268,7 +255,6 @@ function renderPredict(pred) {
 }
 
 async function poll() {
-  if (!API) { setStatus('offline', 'Chưa cấu hình API URL'); return; }
   setStatus('loading', 'Đang tải...');
   const h = await api('/api/history?limit=50');
   if (!h.ok) { setStatus('offline', 'Mất kết nối: ' + (h.error || h.status)); return; }
@@ -290,18 +276,16 @@ async function poll() {
 }
 
 async function testAPI() {
-  if (!API) { toast('Chưa nhập API URL', 'error'); return; }
   log('════ TEST API ════', '#feca57');
-  for (const ep of ['/', '/api/health', '/api/current', '/api/history?limit=5', '/api/predict']) {
+  for (const ep of ['/', '/api', '/api/health', '/api/current', '/api/history?limit=5', '/api/predict']) {
     const r = await api(ep);
     if (r.error) log(`❌ GET ${ep} → ${r.error}`, '#ff6b6b');
-    else log(`✅ GET ${ep} → ${JSON.stringify(r.body).slice(0, 200)}`, '#a8ffab');
+    else log(`✅ GET ${ep} → ${JSON.stringify(r.body).slice(0, 180)}`, '#a8ffab');
   }
   toast('Đã test xong', 'info');
 }
 
 async function forceGenerate() {
-  if (!API) { toast('Chưa nhập API URL', 'error'); return; }
   const r = await api('/api/generate', { method: 'POST' });
   if (r.ok) { log('⚡ Sinh phiên mới: ' + JSON.stringify(r.body.record), '#feca57'); toast('Đã sinh phiên mới', 'info'); setTimeout(poll, 300); }
   else toast('Lỗi: ' + (r.error || r.status), 'error');
@@ -314,8 +298,10 @@ function reloadGame() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  if (API) { log('════ KHỞI ĐỘNG — API: ' + API + ' ════', '#feca57'); poll(); pollTimer = setInterval(poll, POLL_MS); }
-  else { setStatus('offline', 'Nhập URL API ở trên rồi bấm Lưu'); log('⚠ Chưa cấu hình API URL.', '#feca57'); }
+  log('════ KHỞI ĐỘNG — API cùng domain ════', '#feca57');
+  log('🌐 Origin: ' + window.location.origin, '#a8ffab');
+  poll();
+  pollTimer = setInterval(poll, POLL_MS);
 });
 </script>
 </body>
